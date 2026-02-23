@@ -1,0 +1,704 @@
+A continuación tienes un ejemplo de dashboard **hiper realista** en HTML/CSS (sin JS) inspirado en el estilo de la pantalla que mostraste, pero adaptado al control portuario de Santos y Paranaguá, considerando que en 2025 Brasil moviliza más de 1.400 millones de toneladas en sus puertos y vías navegables. [neofeed.com](https://neofeed.com.br/negocios/porto-de-santos-vai-dobrar-de-tamanho-e-ganhar-mais-oito-terminais-de-cargas/en/)
+
+Puedes copiarlo en un archivo `dashboard_puertos.html` y abrirlo en el navegador; luego podrías conectar los valores a datos reales o a una API.
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>OPS MARÍTIMAS BRASIL 2025 - Dashboard Puertos Santos & Paranaguá</title>
+<style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;}
+    body{
+        background:#020716;
+        color:#e8f4ff;
+    }
+    .dashboard{
+        width:100vw;
+        height:100vh;
+        padding:18px 22px;
+        background:radial-gradient(circle at top, #123b7a 0, #020716 55%, #000 100%);
+        display:grid;
+        grid-template-columns:24% 52% 24%;
+        grid-template-rows:10% 45% 45%;
+        grid-gap:14px;
+    }
+    .panel{
+        border:1px solid rgba(0,180,255,0.6);
+        border-radius:8px;
+        padding:10px 12px;
+        background:linear-gradient(135deg,rgba(4,19,46,0.95),rgba(2,9,22,0.98));
+        box-shadow:0 0 16px rgba(0,180,255,0.18);
+        position:relative;
+        overflow:hidden;
+    }
+    .panel:before{
+        content:"";
+        position:absolute;
+        inset:0;
+        background:linear-gradient(145deg,rgba(0,220,255,0.08),transparent 40%);
+        pointer-events:none;
+    }
+    .panel h2{
+        font-size:14px;
+        letter-spacing:.06em;
+        color:#7ed4ff;
+        margin-bottom:6px;
+        text-transform:uppercase;
+    }
+    .panel h3{
+        font-size:12px;
+        color:#9bd7ff;
+        text-transform:uppercase;
+        margin-top:4px;
+        margin-bottom:4px;
+    }
+    .header{
+        grid-column:1 / 4;
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+    }
+    .title-block h1{
+        font-size:22px;
+        letter-spacing:.15em;
+        text-transform:uppercase;
+        color:#7fe0ff;
+        text-shadow:0 0 14px rgba(0,255,255,0.8);
+    }
+    .title-block span{
+        font-size:11px;
+        color:#92b3ff;
+    }
+    .badges{
+        display:flex;
+        gap:10px;
+        font-size:11px;
+    }
+    .badge{
+        padding:4px 8px;
+        border-radius:999px;
+        border:1px solid rgba(0,200,255,0.8);
+        color:#dff7ff;
+        background:radial-gradient(circle at top,#004a7a,transparent);
+    }
+    .kpi-row{
+        display:flex;
+        gap:10px;
+        margin-top:4px;
+        font-size:11px;
+    }
+    .kpi{
+        flex:1;
+        padding:4px 6px;
+        border-radius:6px;
+        border:1px solid rgba(0,130,255,0.4);
+        background:rgba(5,20,52,0.8);
+    }
+    .kpi span.label{color:#7ab5ff;font-size:10px;}
+    .kpi span.value{font-size:14px;font-weight:bold;color:#fffb9b;}
+    .kpi span.sub{font-size:10px;color:#9dd8ff;}
+
+    .grid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        grid-gap:6px;
+        font-size:11px;
+        margin-top:4px;
+    }
+    .grid div.label{color:#7ab5ff;}
+    .grid div.value{color:#fffb9b;text-align:right;}
+
+    .gauge-container{
+        display:flex;
+        gap:10px;
+        margin-top:4px;
+    }
+    .gauge{
+        flex:1;
+    }
+    .gauge-bar{
+        position:relative;
+        width:100%;
+        height:7px;
+        border-radius:999px;
+        background:#081123;
+        overflow:hidden;
+        margin-top:3px;
+    }
+    .gauge-fill{
+        position:absolute;
+        left:0;top:0;bottom:0;
+        border-radius:999px;
+        background:linear-gradient(90deg,#00f0ff,#00ff88);
+    }
+    .mini-bar-row{
+        display:flex;
+        align-items:center;
+        margin-top:2px;
+        font-size:10px;
+    }
+    .mini-bar-label{
+        flex:0 0 55px;
+        color:#9bd7ff;
+    }
+    .mini-bar{
+        flex:1;
+        height:5px;
+        border-radius:999px;
+        background:#071020;
+        margin:0 4px;
+        overflow:hidden;
+    }
+    .mini-bar-inner{
+        height:100%;
+        background:linear-gradient(90deg,#2af598,#009efd);
+    }
+    .mini-bar-value{
+        width:40px;
+        text-align:right;
+        color:#fffb9b;
+    }
+
+    /* Map central */
+    .map{
+        position:relative;
+        height:100%;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+    }
+    .map-canvas{
+        flex:1;
+        margin-top:4px;
+        border-radius:10px;
+        background:
+          radial-gradient(circle at 20% 15%,rgba(0,255,255,0.26),transparent 55%),
+          url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1280px-World_map_-_low_resolution.svg.png')
+          center/cover no-repeat;
+        position:relative;
+        overflow:hidden;
+        filter:drop-shadow(0 0 20px rgba(0,220,255,0.45));
+    }
+    .port-point{
+        position:absolute;
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        background:radial-gradient(circle,#ffed6b 0,#ff6b00 60%,transparent 70%);
+        box-shadow:0 0 18px rgba(255,160,40,0.9);
+    }
+    .port-label{
+        position:absolute;
+        font-size:10px;
+        background:rgba(0,10,35,0.9);
+        padding:2px 5px;
+        border-radius:999px;
+        border:1px solid rgba(0,220,255,0.7);
+        color:#fff;
+        white-space:nowrap;
+    }
+    .route{
+        position:absolute;
+        height:1px;
+        background:linear-gradient(90deg,rgba(255,140,0,0.1),rgba(255,200,50,0.8));
+        box-shadow:0 0 10px rgba(255,200,50,0.7);
+        transform-origin:left center;
+        opacity:0.9;
+    }
+    .map-footer{
+        margin-top:6px;
+        font-size:10px;
+        color:#9bd7ff;
+        display:flex;
+        justify-content:space-between;
+    }
+
+    /* Charts simulados */
+    .sparkline{
+        margin-top:4px;
+        height:40px;
+        border-radius:6px;
+        background:repeating-linear-gradient(
+            to top,
+            rgba(0,120,200,0.18),
+            rgba(0,120,200,0.18) 1px,
+            transparent 1px,
+            transparent 7px
+        );
+        position:relative;
+        overflow:hidden;
+    }
+    .sparkline polyline{
+        fill:none;
+        stroke:#2af598;
+        stroke-width:2;
+    }
+    .spark-svg{
+        width:100%;
+        height:100%;
+    }
+
+    .table{
+        margin-top:4px;
+        font-size:10px;
+        border-collapse:collapse;
+        width:100%;
+    }
+    .table th,.table td{
+        border-bottom:1px solid rgba(40,90,150,0.7);
+        padding:2px 3px;
+        text-align:left;
+    }
+    .table th{
+        color:#7ab5ff;
+        text-transform:uppercase;
+        font-weight:normal;
+        font-size:9px;
+    }
+
+    .status-tag{
+        padding:1px 4px;
+        border-radius:999px;
+        font-size:9px;
+        border:1px solid;
+    }
+    .ok{color:#7dffbe;border-color:#38f595;}
+    .alert{color:#ffda7d;border-color:#ffc857;}
+    .risk{color:#ff7d9b;border-color:#ff4d6a;}
+
+    .footer-right{
+        font-size:9px;
+        color:#9bd7ff;
+        position:absolute;
+        bottom:5px;
+        right:8px;
+    }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+    <!-- CABECERA -->
+    <div class="panel header">
+        <div class="title-block">
+            <h1>CENTRO DE CONTROL PORTUARIO – BRASIL 2025</h1>
+            <span>Sistema integrado de operaciones marítimas, estaciones de transbordo y navegación interior (Santos &amp; Paranaguá).</span>
+            <div class="kpi-row" style="margin-top:6px;">
+                <div class="kpi">
+                    <span class="label">Tráfico total 2025</span><br>
+                    <span class="value">1.402 Mt</span>
+                    <span class="sub">Puertos marítimos + hidrovías nacionales.</span>
+                </div>
+                <div class="kpi">
+                    <span class="label">Santos – carga anual</span><br>
+                    <span class="value">186,4 Mt</span>
+                    <span class="sub">Récord histórico de movimiento anual.</span>
+                </div>
+                <div class="kpi">
+                    <span class="label">Paranaguá – meta 2025</span><br>
+                    <span class="value">70 Mt</span>
+                    <span class="sub">Graneles sólidos y contenedores.</span>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="badges">
+                <div class="badge">Modo: Operación Continua 24/7</div>
+                <div class="badge">Regulación: ANTAQ / ISPS / SOLAS</div>
+                <div class="badge">Fecha: 30·12·2025 13:08 BRT</div>
+            </div>
+            <div class="kpi-row" style="margin-top:8px;">
+                <div class="kpi">
+                    <span class="label">Buques en área de fondeo</span><br>
+                    <span class="value">34</span>
+                    <span class="sub">Santos: 22 · Paranaguá: 12</span>
+                </div>
+                <div class="kpi">
+                    <span class="label">Índice de seguridad</span><br>
+                    <span class="value">98,7 %</span>
+                    <span class="sub">Sin incidentes LTI últimos 30 días.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA IZQUIERDA -->
+    <div class="panel">
+        <h2>VENTANAS DE ARRIBO – SANTOS</h2>
+        <div class="sparkline">
+            <svg class="spark-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
+                <polyline points="0,30 10,26 20,28 30,20 40,18 50,14 60,16 70,12 80,10 90,8 100,6"/>
+            </svg>
+        </div>
+        <div class="grid">
+            <div class="label">ETA próximas 24 h</div><div class="value">18 buques</div>
+            <div class="label">Tiempo medio espera</div><div class="value">7,4 h</div>
+            <div class="label">Prioridad granel agrícola</div><div class="value">54 % slots</div>
+            <div class="label">Nivel de congestión</div><div class="value"><span class="status-tag alert">Controlado</span></div>
+        </div>
+
+        <h3>Control de accesos terrestres</h3>
+        <table class="table">
+            <tr>
+                <th>Gate</th><th>Modo</th><th>Camiones/h</th><th>Utilización</th><th>Estado</th>
+            </tr>
+            <tr>
+                <td>TEU–NORTE</td>
+                <td>Contenedores</td>
+                <td>185</td>
+                <td>92 %</td>
+                <td><span class="status-tag alert">Alta Demanda</span></td>
+            </tr>
+            <tr>
+                <td>GRANEL–OESTE</td>
+                <td>Granel sólido</td>
+                <td>142</td>
+                <td>76 %</td>
+                <td><span class="status-tag ok">Estable</span></td>
+            </tr>
+            <tr>
+                <td>LIQ–SUD</td>
+                <td>Granel líquido</td>
+                <td>64</td>
+                <td>61 %</td>
+                <td><span class="status-tag ok">Normal</span></td>
+            </tr>
+        </table>
+
+        <h3>Vigilancia y seguridad</h3>
+        <div class="gauge-container">
+            <div class="gauge">
+                <div class="grid">
+                    <div class="label">Cobertura CCTV</div><div class="value">99 %</div>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill" style="width:99%;"></div>
+                </div>
+                <div style="font-size:9px;margin-top:2px;">Zonas ciegas internas: 3 (en mitigación).</div>
+            </div>
+        </div>
+
+        <div class="gauge-container">
+            <div class="gauge">
+                <div class="grid">
+                    <div class="label">Alarmas VTS últimas 12 h</div><div class="value">5 eventos</div>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill" style="width:55%;background:linear-gradient(90deg,#ff7d9b,#ffcf71);"></div>
+                </div>
+                <div style="font-size:9px;margin-top:2px;">3 CPA crítica por maniobra; 2 exceso velocidad canal.</div>
+            </div>
+        </div>
+
+        <h3>Inspecciones Estado Rector del Puerto</h3>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">ISPS</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:97%;"></div></div>
+            <div class="mini-bar-value">97 % cumplimiento</div>
+        </div>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">MARPOL</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:93%;"></div></div>
+            <div class="mini-bar-value">93 %</div>
+        </div>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">SOLAS</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:99%;"></div></div>
+            <div class="mini-bar-value">99 %</div>
+        </div>
+
+        <div class="footer-right">Fuente: APS / VTS Santos · AIS en tiempo real.</div>
+    </div>
+
+    <!-- MAPA CENTRAL -->
+    <div class="panel">
+        <h2>TRÁFICO MARÍTIMO – CORREDOR ATLÁNTICO SUR</h2>
+        <div class="map">
+            <div class="map-canvas">
+                <!-- Coordenadas aproximadas sobre el mapa -->
+                <!-- Santos -->
+                <div class="port-point" style="left:40%;top:72%;"></div>
+                <div class="port-label" style="left:42%;top:71%;">SANTOS · Hub contenedores &amp; granel</div>
+
+                <!-- Paranaguá -->
+                <div class="port-point" style="left:41%;top:69%;"></div>
+                <div class="port-label" style="left:43%;top:68%;">PARANAGUÁ · Exportador agrícola</div>
+
+                <!-- Europa -->
+                <div class="port-point" style="left:63%;top:33%;"></div>
+                <div class="port-label" style="left:64%;top:31%;">NORTE EUROPA</div>
+
+                <!-- Asia -->
+                <div class="port-point" style="left:82%;top:40%;"></div>
+                <div class="port-label" style="left:70%;top:45%;">ASIA / HUBS TRANSBORDO</div>
+
+                <!-- África occidental -->
+                <div class="port-point" style="left:55%;top:55%;"></div>
+                <div class="port-label" style="left:56%;top:56%;">ÁFRICA OCC.</div>
+
+                <!-- Rutas visuales -->
+                <div class="route" style="left:40%;top:73%;width:23%;transform:rotate(-20deg);"></div>
+                <div class="route" style="left:41%;top:70%;width:30%;transform:rotate(-10deg);"></div>
+                <div class="route" style="left:41%;top:70%;width:14%;transform:rotate(18deg);"></div>
+            </div>
+            <div class="map-footer">
+                <div>
+                    TEUs anuales Santos: 5,9 M · Paranaguá: 1,4 M (estimado).<br>
+                    Principales commodities: soja, maíz, azúcar, contenedores refrigerados y vehículos.
+                </div>
+                <div>
+                    Integración VTS + AIS + radares costeros.<br>
+                    Modo de alerta: CPA &lt; 0,5 NM o violación de canal de acceso.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA DERECHA -->
+    <div class="panel">
+        <h2>OPERACIÓN PARANAGUÁ Y NAVEGACIÓN INTERIOR</h2>
+
+        <h3>Ventanas de atraque – Paranaguá</h3>
+        <div class="grid">
+            <div class="label">Buques atracados</div><div class="value">11</div>
+            <div class="label">Buques en espera</div><div class="value">12</div>
+            <div class="label">Productividad media</div><div class="value">2.300 t/h</div>
+            <div class="label">Draft operativo</div><div class="value">13,3 m</div>
+        </div>
+        <div class="sparkline">
+            <svg class="spark-svg" viewBox="0 0 100 40" preserveAspectRatio="none">
+                <polyline points="0,25 10,27 20,24 30,20 40,18 50,21 60,15 70,12 80,13 90,11 100,9"/>
+            </svg>
+        </div>
+
+        <h3>Tráfico por estaciones de transbordo (hidrovías)</h3>
+        <table class="table">
+            <tr>
+                <th>Hidrovía</th><th>Terminal fluvial</th><th>Ton 2025</th><th>Oc.</th><th>Riesgo</th>
+            </tr>
+            <tr>
+                <td>Madeira</td>
+                <td>Itacoatiara</td>
+                <td>12,1 Mt</td>
+                <td>88 %</td>
+                <td><span class="status-tag ok">Bajo</span></td>
+            </tr>
+            <tr>
+                <td>Tietê–Paraná</td>
+                <td>Est. Maringá</td>
+                <td>8,4 Mt</td>
+                <td>73 %</td>
+                <td><span class="status-tag alert">Calado mínimo</span></td>
+            </tr>
+            <tr>
+                <td>Paraguay</td>
+                <td>Corumbá</td>
+                <td>3,3 Mt</td>
+                <td>54 %</td>
+                <td><span class="status-tag risk">Restricción sequía</span></td>
+            </tr>
+        </table>
+
+        <h3>Mecánica y recursos</h3>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">STS Grúas</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:81%;"></div></div>
+            <div class="mini-bar-value">18 / 22 operativas</div>
+        </div>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">RTG Yard</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:90%;"></div></div>
+            <div class="mini-bar-value">63 / 70</div>
+        </div>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">Trenes</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:68%;"></div></div>
+            <div class="mini-bar-value">15 / 22</div>
+        </div>
+
+        <h3>Matriz de riesgo operacional</h3>
+        <div class="grid">
+            <div class="label">Incidentes últimos 7 días</div><div class="value">0 LTI · 2 menores</div>
+            <div class="label">Clima adverso</div><div class="value"><span class="status-tag alert">Lluvia intensa</span></div>
+            <div class="label">Restricción calado hidrovías</div><div class="value"><span class="status-tag risk">Crítica norte</span></div>
+            <div class="label">Nivel de cumplimiento normativo</div><div class="value">96 % auditorías</div>
+        </div>
+
+        <div class="footer-right">Sistema maestro: Centro Nacional de Coordinación Portuaria – Brasil.</div>
+    </div>
+
+    <!-- COLUMNA INFERIOR IZQ -->
+    <div class="panel">
+        <h2>RESUMEN DE TRÁFICO DIARIO</h2>
+        <table class="table">
+            <tr>
+                <th>Puerto / Zona</th><th>Buques</th><th>Ton día</th><th>Tiempo ciclo</th><th>Desvío plan</th>
+            </tr>
+            <tr>
+                <td>Santos – Contenedores</td>
+                <td>22</td>
+                <td>365.000 t</td>
+                <td>19,2 h</td>
+                <td><span class="status-tag alert">+8 %</span></td>
+            </tr>
+            <tr>
+                <td>Santos – Granel</td>
+                <td>13</td>
+                <td>418.000 t</td>
+                <td>27,5 h</td>
+                <td><span class="status-tag ok">En línea</span></td>
+            </tr>
+            <tr>
+                <td>Paranaguá – Exportación</td>
+                <td>16</td>
+                <td>292.000 t</td>
+                <td>23,1 h</td>
+                <td><span class="status-tag ok">-3 %</span></td>
+            </tr>
+            <tr>
+                <td>Transbordo – Hidrovías</td>
+                <td>39 barcazas</td>
+                <td>148.000 t</td>
+                <td>31,4 h</td>
+                <td><span class="status-tag alert">+5 %</span></td>
+            </tr>
+        </table>
+
+        <h3>Indicadores de eficiencia operativa</h3>
+        <div class="gauge-container">
+            <div class="gauge">
+                <div class="grid">
+                    <div class="label">Utilización muelles</div><div class="value">82 %</div>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill" style="width:82%;"></div>
+                </div>
+            </div>
+            <div class="gauge">
+                <div class="grid">
+                    <div class="label">Índice puntualidad ETA</div><div class="value">91 %</div>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill" style="width:91%;background:linear-gradient(90deg,#2af598,#009efd);"></div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Alertas activas</h3>
+        <ul style="font-size:10px;margin-top:4px;margin-left:12px;line-height:1.5;">
+            <li>Ventana de oleaje &gt; 2,5 m prevista en Santos canal externo (próximas 6 h).</li>
+            <li>Restricción de calado en convoyes fluviales Paraguay – reducir a 80 % carga útil.</li>
+            <li>Activo protocolo ISPS nivel 1 en ambos puertos; inspección aleatoria de contenedores IMO.</li>
+        </ul>
+    </div>
+
+    <!-- COLUMNA INFERIOR CENTRAL -->
+    <div class="panel">
+        <h2>TIEMPOS LOGÍSTICOS – CADENA INTERMODAL</h2>
+        <table class="table">
+            <tr>
+                <th>Segmento</th><th>Origen/Destino</th><th>Modal</th><th>Tiempo medio</th><th>SLA</th>
+            </tr>
+            <tr>
+                <td>Corredor agro-exportador</td>
+                <td>Mato Grosso → Santos</td>
+                <td>Carretero + ferroviario</td>
+                <td>52 h</td>
+                <td>≤ 60 h</td>
+            </tr>
+            <tr>
+                <td>Corredor sur</td>
+                <td>Paraná → Paranaguá</td>
+                <td>Carretero</td>
+                <td>11 h</td>
+                <td>≤ 14 h</td>
+            </tr>
+            <tr>
+                <td>Transbordo fluvial</td>
+                <td>Madeira → Santos</td>
+                <td>Barcaza + marítimo</td>
+                <td>7,3 días</td>
+                <td>≤ 8 días</td>
+            </tr>
+            <tr>
+                <td>Carga contenedorizada</td>
+                <td>Santos ↔ Norte Europa</td>
+                <td>Marítimo deep sea</td>
+                <td>15,4 días</td>
+                <td>≤ 16 días</td>
+            </tr>
+        </table>
+
+        <h3>Nivel de servicio cliente</h3>
+        <div class="gauge-container">
+            <div class="gauge">
+                <div class="grid">
+                    <div class="label">On–time delivery export</div><div class="value">94 %</div>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill" style="width:94%;"></div>
+                </div>
+            </div>
+            <div class="gauge">
+                <div class="grid">
+                    <div class="label">On–time arrival import</div><div class="value">89 %</div>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill" style="width:89%;background:linear-gradient(90deg,#ffcf71,#ff7d9b);"></div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Panel normativo</h3>
+        <ul style="font-size:10px;margin-top:4px;margin-left:12px;line-height:1.5;">
+            <li>Monitoreo integrado de convenios SOLAS, MARPOL, ISPS para buques extranjeros.</li>
+            <li>Alertas automáticas por vencimiento de certificados y deficiencias recurrentes.</li>
+            <li>Histórico de PSC (Port State Control) por bandera y tipo de buque.</li>
+        </ul>
+    </div>
+
+    <!-- COLUMNA INFERIOR DERECHA -->
+    <div class="panel">
+        <h2>CUADRO DE MANDO DEL CONTROL PORTUARIO</h2>
+
+        <h3>Gestión de tráfico (Santos + Paranaguá)</h3>
+        <div class="grid">
+            <div class="label">Buques bajo seguimiento radar/AIS</div><div class="value">164</div>
+            <div class="label">Rutas activas</div><div class="value">37 servicios liner</div>
+            <div class="label">Ventanas de atraque confirmadas</div><div class="value">96 % de solicitudes</div>
+            <div class="label">Desvío promedio ETA real</div><div class="value">± 21 min</div>
+        </div>
+
+        <h3>Indicadores de seguridad</h3>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">Eventos ISPS</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:12%;background:#2af598;"></div></div>
+            <div class="mini-bar-value">2 / mes</div>
+        </div>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">Inc. navegación</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:6%;background:#2af598;"></div></div>
+            <div class="mini-bar-value">1 / mes</div>
+        </div>
+        <div class="mini-bar-row">
+            <div class="mini-bar-label">Derrames</div>
+            <div class="mini-bar"><div class="mini-bar-inner" style="width:0%;"></div></div>
+            <div class="mini-bar-value">0</div>
+        </div>
+
+        <h3>Integración tecnológica</h3>
+        <ul style="font-size:10px;margin-top:4px;margin-left:12px;line-height:1.5;">
+            <li>Red de radares costeros, AIS clase A/B, cámaras térmicas y drones para inspección de cascos.</li>
+            <li>Motor de reglas para alarmas en tiempo real: CPA, violación de canal, anomalías de velocidad y zona restringida.</li>
+            <li>Interfaz única para Autoridad Portuaria Nacional, Guardia Costera, Aduanas y Policía Federal.</li>
+        </ul>
+
+        <div class="footer-right">Diseño conceptual – Centro de Control Portuario Santos &amp; Paranaguá 2025.</div>
+    </div>
+
+</div>
+</body>
+</html>
+```
